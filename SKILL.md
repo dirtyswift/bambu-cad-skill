@@ -3,24 +3,71 @@ name: parametric-3d-printing
 description: "Use this skill when the user wants to design a 3D-printable physical object they intend to manufacture. Triggers: any mention of '3D print', 'STL', 'parametric model', 'enclosure', 'bracket', 'mount', 'case', 'housing', 'CadQuery', 'OpenSCAD', or a specific FDM printer (Bambu Lab, Prusa, Ender); questions about print-friendly design, snap-fits, tolerances, or wall thickness; and requests for functional parts like Arduino enclosures, cable organizers, wall mounts, adapters, or mechanical components. Also fires when the user describes a real physical object to make, provided the goal is to manufacture it. Do NOT use for: 3D rendering, animation, game assets, digital-only art, photogrammetry, sculpting, editing an existing STL file the user already has, or any 3D work that is not heading toward a printer."
 ---
 
-## Bambu Lab Printer Targeting
+## Bambu Lab Printer Targeting (v2)
 
-Before generating any model, ALWAYS ask the user which Bambu printer they're targeting. Default = `a1_mini` (smallest volume = max compatibility across the range).
+Before generating any model, ALWAYS:
+1. Ask which Bambu printer is targeted (default: `a1_mini`)
+2. Load `bambu_printers.json` to get printer constraints
+3. Identify the design category from the user request:
+   - **MECHANICAL** (brackets, mounts, holders, enclosures, cable management)
+   - **BRANDED** (nameplates, keychains, logos, decorative pieces with text)
+   - **FUNCTIONAL** (stands, organizers, dock-style objects)
 
-Load `bambu_printers.json` and apply these constraints AT ALL TIMES:
+### Hard constraints (apply ALWAYS)
 
 1. **Build volume hard limit** — bounding box must fit inside `build_volume_mm` minus 5mm safety margin on each axis
 2. **Material gating** — refuse to suggest materials not in the printer's `materials` array
-3. **Enclosure check** — if `enclosure: false`, never recommend ABS/ASA/PC even if the printer technically supports them
-4. **Wall thickness** — use multiples of `nozzle_diameter_mm` (typically 4× = 1.6mm minimum for FDM strength)
+3. **Enclosure check** — if `enclosure: false`, never recommend ABS/ASA/PC
+4. **Wall thickness** — minimum 1.6mm (4× nozzle 0.4mm), prefer multiples of 0.4mm
 5. **Bottom flat** — every model MUST have a flat bottom for bed adhesion (chamfer 1mm at base, never fillet)
+6. **Print orientation** — explicitly choose and document the print orientation that minimizes overhangs (<45°) WITHOUT requiring supports. State this orientation in a comment in the CadQuery code AND in the meta.json.
 
-When delivering output, ALWAYS produce:
-- `.stl` (mesh export)
-- `.3mf` with embedded Bambu Studio profile for the targeted printer
-- `meta.json` with title, suggested description, recommended material, print time estimate
+### Pre-export validation (MANDATORY before generating STL/3MF)
 
-If the user wants MakerWorld-publishable output, target A1 Mini volume by default → it ensures compatibility with the entire Bambu range.
+Before exporting, run these checks. If ANY fails, refuse export and ask user for adjustment:
+
+- **Manifold check**: the resulting solid must be valid (no non-manifold edges, no self-intersections)
+- **Min feature size**: no positive feature smaller than 1.2mm in any dimension
+- **Min gap size**: between two solid features (e.g. between letters in text), gaps must be at least 2mm wide for FDM single-extrusion clarity
+- **Overhang check**: no face has angle >45° relative to print orientation Z-axis without explicit support strategy
+- **Bridge length**: any unsupported horizontal span must be <20mm
+
+### Category-specific rules
+
+**MECHANICAL category**:
+- Always specify a single, deliberate print orientation (default: largest flat face down)
+- Tolerances: holes for screws = nominal +0.2mm, slots for inserts = nominal +0.3mm
+- Avoid combinations of fine details on opposite faces (one face = print bed, other face = top)
+
+**BRANDED category** (text/logo work):
+- DO NOT use CadQuery's text() function for "cutout silhouette" style designs (logos that follow letter contours)
+- For cutout silhouette designs, use this workflow instead:
+  1. Generate or import an SVG of the desired shape
+  2. Import SVG into CadQuery via `cq.importers.importDXF` or SVG-to-DXF conversion
+  3. Extrude the 2D shape directly
+- For simple "text on a plate" designs (like a nameplate with rectangular base), CadQuery text() is OK BUT:
+  - Always use a base plate behind the text (never floating letters)
+  - Letter height ≥ 8mm
+  - Letter stroke width ≥ 2mm
+  - Inter-letter spacing ≥ 2mm (verify programmatically before export)
+  - Text relief depth ≥ 1mm (recessed) or 1.5mm (raised)
+
+**FUNCTIONAL category**:
+- Ask the user for a reference object size and required tolerances UPFRONT (before generating)
+- For phone stands / device docks: do not assume case dimensions — ask user to confirm "phone + case combined dimensions" explicitly
+- Keep base footprint compact: never wider than the device + 10mm margin on each side
+
+### Output deliverables
+
+Always produce:
+- `model.stl` (mesh export)
+- `model.3mf` with embedded Bambu Studio profile for the targeted printer
+- `meta.json` with: title, recommended_material, print_orientation, estimated_print_time, wall_thickness_used, validation_checks_passed (array of all checks passed)
+- A short text summary of design choices and trade-offs
+
+### When in doubt
+
+If the user request is ambiguous or risky (complex geometry, fine details, multi-part), ASK clarifying questions BEFORE generating geometry. A clarification round is cheaper than a failed print.
 
 # Parametric 3D Printing with CadQuery
 
