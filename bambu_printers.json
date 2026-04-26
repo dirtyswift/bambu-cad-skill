@@ -1,0 +1,47 @@
+{
+  "a1_mini": {
+    "name": "Bambu Lab A1 Mini",
+    "build_volume_mm": [180, 180, 180],
+    "nozzle_diameter_mm": 0.4,
+    "bed_temp_max_c": 80,
+    "enclosure": false,
+    "materials": ["PLA", "PETG", "TPU", "PVA"],
+    "ams": "ams_lite_optional"
+  },
+  "a1": {
+    "name": "Bambu Lab A1",
+    "build_volume_mm": [256, 256, 256],
+    "nozzle_diameter_mm": 0.4,
+    "bed_temp_max_c": 100,
+    "enclosure": false,
+    "materials": ["PLA", "PETG", "TPU", "PVA"],
+    "ams": "ams_lite_optional"
+  },
+  "p1p": {
+    "name": "Bambu Lab P1P",
+    "build_volume_mm": [256, 256, 256],
+    "nozzle_diameter_mm": 0.4,
+    "bed_temp_max_c": 100,
+    "enclosure": false,
+    "materials": ["PLA", "PETG", "TPU", "PVA"],
+    "ams": "ams_optional"
+  },
+  "p1s": {
+    "name": "Bambu Lab P1S",
+    "build_volume_mm": [256, 256, 256],
+    "nozzle_diameter_mm": 0.4,
+    "bed_temp_max_c": 100,
+    "enclosure": true,
+    "materials": ["PLA", "PETG", "TPU", "ABS", "ASA", "PVA"],
+    "ams": "ams_optional"
+  },
+  "x1c": {
+    "name": "Bambu Lab X1 Carbon",
+    "build_volume_mm": [256, 256, 256],
+    "nozzle_diameter_mm": 0.4,
+    "bed_temp_max_c": 110,
+    "enclosure": true,
+    "materials": ["PLA", "PETG", "TPU", "ABS", "ASA", "PC", "PA", "PA-CF", "PET-CF"],
+    "ams": "ams_optional"
+  }
+}

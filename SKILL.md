@@ -3,6 +3,25 @@ name: parametric-3d-printing
 description: "Use this skill when the user wants to design a 3D-printable physical object they intend to manufacture. Triggers: any mention of '3D print', 'STL', 'parametric model', 'enclosure', 'bracket', 'mount', 'case', 'housing', 'CadQuery', 'OpenSCAD', or a specific FDM printer (Bambu Lab, Prusa, Ender); questions about print-friendly design, snap-fits, tolerances, or wall thickness; and requests for functional parts like Arduino enclosures, cable organizers, wall mounts, adapters, or mechanical components. Also fires when the user describes a real physical object to make, provided the goal is to manufacture it. Do NOT use for: 3D rendering, animation, game assets, digital-only art, photogrammetry, sculpting, editing an existing STL file the user already has, or any 3D work that is not heading toward a printer."
 ---
 
+## Bambu Lab Printer Targeting
+
+Before generating any model, ALWAYS ask the user which Bambu printer they're targeting. Default = `a1_mini` (smallest volume = max compatibility across the range).
+
+Load `bambu_printers.json` and apply these constraints AT ALL TIMES:
+
+1. **Build volume hard limit** — bounding box must fit inside `build_volume_mm` minus 5mm safety margin on each axis
+2. **Material gating** — refuse to suggest materials not in the printer's `materials` array
+3. **Enclosure check** — if `enclosure: false`, never recommend ABS/ASA/PC even if the printer technically supports them
+4. **Wall thickness** — use multiples of `nozzle_diameter_mm` (typically 4× = 1.6mm minimum for FDM strength)
+5. **Bottom flat** — every model MUST have a flat bottom for bed adhesion (chamfer 1mm at base, never fillet)
+
+When delivering output, ALWAYS produce:
+- `.stl` (mesh export)
+- `.3mf` with embedded Bambu Studio profile for the targeted printer
+- `meta.json` with title, suggested description, recommended material, print time estimate
+
+If the user wants MakerWorld-publishable output, target A1 Mini volume by default → it ensures compatibility with the entire Bambu range.
+
 # Parametric 3D Printing with CadQuery
 
 ## Overview
